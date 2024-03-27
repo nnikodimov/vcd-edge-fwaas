@@ -38,34 +38,16 @@ data "vcd_nsxt_app_port_profile" "app_port2" {
 data "vcd_nsxt_app_port_profile" "app_port3" {
   context_id = data.vcd_org_vdc.vdc1.id
   scope = "SYSTEM"
-  name  = "MS_RPC_UDP"
+  name  = "LDAP"
 }
 
 data "vcd_nsxt_app_port_profile" "app_port4" {
   context_id = data.vcd_org_vdc.vdc1.id
   scope = "SYSTEM"
-  name  = "MS_RPC_TCP"
-}
-
-data "vcd_nsxt_app_port_profile" "app_port5" {
-  context_id = data.vcd_org_vdc.vdc1.id
-  scope = "SYSTEM"
-  name  = "LDAP"
-}
-
-data "vcd_nsxt_app_port_profile" "app_port6" {
-  context_id = data.vcd_org_vdc.vdc1.id
-  scope = "SYSTEM"
-  name  = "Microsoft Active Directory V1"
-}
-
-data "vcd_nsxt_app_port_profile" "app_port7" {
-  context_id = data.vcd_org_vdc.vdc1.id
-  scope = "SYSTEM"
   name  = "HTTP"
 }
 
-data "vcd_nsxt_app_port_profile" "app_port8" {
+data "vcd_nsxt_app_port_profile" "app_port5" {
   context_id = data.vcd_org_vdc.vdc1.id
   scope = "SYSTEM"
   name  = "HTTPS"
@@ -85,6 +67,15 @@ resource "vcd_nsxt_ip_set" "ipset1" {
   ]
 }
 
+resource "vcd_nsxt_ip_set" "ipset2" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.edge1.id
+  name        = "MGMT"
+  description = "IP Set containing Management jump box"
+  ip_addresses = [
+    "192.168.100.5"
+  ]
+}
+
 resource "vcd_nsxt_security_group" "vdi" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.edge1.id
   name        = "VDI"
@@ -94,6 +85,15 @@ resource "vcd_nsxt_security_group" "vdi" {
 
 resource "vcd_nsxt_firewall" "VDI-Policy" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.edge1.id
+
+  rule {
+    action               = "ALLOW"
+    name                 = "Allow MGMT"
+    direction            = "IN_OUT"
+    ip_protocol          = "IPV4_IPV6"
+    source_ids           = [vcd_nsxt_ip_set.ipset2.id]
+  }
+  
   rule {
     action               = "ALLOW"
     name                 = "Allow DNS"
@@ -106,32 +106,12 @@ resource "vcd_nsxt_firewall" "VDI-Policy" {
   
   rule {
     action               = "ALLOW"
-    name                 = "Allow MS_RPC"
-    direction            = "IN_OUT"
-    ip_protocol          = "IPV4_IPV6"
-    source_ids           = [vcd_nsxt_security_group.vdi.id,vcd_nsxt_ip_set.ipset1.id]
-    destination_ids      = [vcd_nsxt_ip_set.ipset1.id,vcd_nsxt_security_group.vdi.id]
-    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.app_port3.id,data.vcd_nsxt_app_port_profile.app_port4.id]
-  }
- 
-  rule {
-    action               = "ALLOW"
     name                 = "Allow LDAP"
     direction            = "IN_OUT"
     ip_protocol          = "IPV4_IPV6"
     source_ids           = [vcd_nsxt_security_group.vdi.id,vcd_nsxt_ip_set.ipset1.id]
     destination_ids      = [vcd_nsxt_ip_set.ipset1.id,vcd_nsxt_security_group.vdi.id]
-    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.app_port5.id]
-  }
-  
-  rule {
-    action               = "ALLOW"
-    name                 = "Allow Active Directory"
-    direction            = "IN_OUT"
-    ip_protocol          = "IPV4_IPV6"
-    source_ids           = [vcd_nsxt_security_group.vdi.id,vcd_nsxt_ip_set.ipset1.id]
-    destination_ids      = [vcd_nsxt_ip_set.ipset1.id,vcd_nsxt_security_group.vdi.id]
-    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.app_port6.id]
+    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.app_port3.id]
   }
   
   rule {
@@ -140,6 +120,6 @@ resource "vcd_nsxt_firewall" "VDI-Policy" {
     direction            = "IN_OUT"
     ip_protocol          = "IPV4_IPV6"
     source_ids           = [vcd_nsxt_security_group.vdi.id]
-    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.app_port7.id,data.vcd_nsxt_app_port_profile.app_port8.id]
+    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.app_port4.id,data.vcd_nsxt_app_port_profile.app_port5.id]
   }
 }
