@@ -8,7 +8,5 @@
   vcd_provider_gateway = "internet"
   vcd_org = "BRAVO"
   vcd_org_vdc1 = "ovdc-03"
-  vcd_org_admin = "sally"
-  vcd_org_security_admin = "bob"
   vcd_org_vdc1_edge1 = "edge-bravo"
   vcd_catalog = "default"
